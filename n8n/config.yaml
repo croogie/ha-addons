@@ -1,5 +1,5 @@
 name: n8n
-version: "1.81.2"
+version: "1.83.1"
 slug: n8n
 description: Self host your n8n instance
 url: 'https://github.com/croogie/ha-addons'
@@ -15,8 +15,8 @@ map:
   - backup:rw
   - share:rw
   - media:rw
-  - config:ro
-apparmor: true
+  - addon_config:rw
+  - homeassistant_config:ro
 ports:
   5678/tcp: 5678
 ports_description:
