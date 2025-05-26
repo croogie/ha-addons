@@ -9,6 +9,7 @@ on:
 permissions:               # required for PRs from the workflow
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   bump:
