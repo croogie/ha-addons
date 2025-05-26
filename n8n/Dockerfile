@@ -1,5 +1,4 @@
-ARG ADDON_VERSION=1.88.0
-FROM docker.n8n.io/n8nio/n8n:${ADDON_VERSION}
+FROM docker.n8n.io/n8nio/n8n:stable
 USER root
 RUN apk add --no-cache --update jq bash npm
 WORKDIR /data
