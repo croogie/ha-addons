@@ -35,7 +35,7 @@ jobs:
         GH_API: https://api.github.com/repos/n8n-io/n8n/releases/latest
       run: |
         # example tag is "v1.94.0" → strip the "v"
-        new=$(curl -s $GH_API | jq -r .tag_name | sed 's/^v//')
+        new=$(curl -s $GH_API | jq -r .tag_name | sed -E 's/^[^0-9]*//')
         echo "ver=$new" >> "$GITHUB_OUTPUT"
 
     # ───── short-circuit if identical ─────
