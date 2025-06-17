@@ -79,3 +79,12 @@ jobs:
           * `CHANGELOG.md` entry created
         labels: |
           automated
+
+    # ───── enable auto-merge ─────
+    - name: enable auto-merge
+      if: steps.latest.outputs.ver != steps.current.outputs.ver
+      uses: pascalgn/automerge-action@v0.15.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        pr: ${{ steps.pull-request.outputs.pull-request-number }}
