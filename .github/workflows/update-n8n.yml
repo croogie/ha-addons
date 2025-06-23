@@ -83,7 +83,7 @@ jobs:
     # ───── enable auto-merge ─────
     - name: enable auto-merge
       if: steps.latest.outputs.ver != steps.current.outputs.ver
-      uses: pascalgn/automerge-action@v0.15.1
+      uses: pascalgn/automerge-action@v0.16.4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
