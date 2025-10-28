@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [ 1.117.2 ] - 2025-10-28
+
+ Bump n8n to 1.117.2
+
+
 ## [ 1.100.1 ] - 2025-07-05
 
  Bump n8n to 1.100.1
