@@ -1,5 +1,5 @@
 name: n8n
-version: "1.123.4"
+version: "1.123.5"
 slug: n8n
 description: Self host your n8n instance
 url: 'https://github.com/croogie/ha-addons'
