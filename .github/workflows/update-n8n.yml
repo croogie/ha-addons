@@ -68,7 +68,7 @@ jobs:
     # ───── create PR ─────
     - name: pull-request
       if: steps.latest.outputs.ver != steps.current.outputs.ver
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@v8
       with:
         branch: chore/bump-n8n-${{ steps.latest.outputs.ver }}
         title:  "Bump n8n to ${{ steps.latest.outputs.ver }}"
