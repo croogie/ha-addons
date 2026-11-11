@@ -2,7 +2,7 @@
 name: daily-n8n-bump
 
 on:
-  schedule:                # every day at 04:15 CET
+  schedule:                # every day at 05:40 UTC
     - cron:  "40 5 * * *"
   workflow_dispatch:       # manual run
 
@@ -11,12 +11,18 @@ permissions:               # required for PRs from the workflow
   pull-requests: write
   issues: write
 
+concurrency:
+  group: daily-n8n-bump
+  cancel-in-progress: false
+
 jobs:
   bump:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.repository.default_branch }}
 
     # tools we need: curl, jq, GNU sed
     - name: install jq
@@ -33,18 +39,34 @@ jobs:
       shell: bash
       env:
         GH_API: https://api.github.com/repos/n8n-io/n8n/releases/latest
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CURRENT_VERSION: ${{ steps.current.outputs.ver }}
       run: |
-        # example tag is "v1.94.0" → strip the "v"
-        new=$(curl -s $GH_API | jq -r .tag_name | sed -E 's/^n8n@//')
+        set -euo pipefail
+        echo "update=false" >> "$GITHUB_OUTPUT"
+        release=$(curl --fail --silent --show-error \
+          -H "Authorization: Bearer ${GH_TOKEN}" "$GH_API")
+        new=$(jq -r '
+          select(.draft == false and .prerelease == false) |
+          .tag_name | select(test("^n8n@[0-9]+\\.[0-9]+\\.[0-9]+$")) |
+          sub("^n8n@"; "")
+        ' <<< "$release")
+        if [[ -z "$new" ]]; then
+          echo "No stable n8n release found."
+          exit 0
+        fi
+        [[ "$CURRENT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+        newest=$(printf '%s\n' "$CURRENT_VERSION" "$new" | sort -V | tail -n 1)
+        if [[ "$new" == "$CURRENT_VERSION" || "$newest" != "$new" ]]; then
+          echo "No newer stable n8n release."
+          exit 0
+        fi
         echo "ver=$new" >> "$GITHUB_OUTPUT"
-
-    # ───── short-circuit if identical ─────
-    - if: steps.latest.outputs.ver == steps.current.outputs.ver
-      run: echo "No new n8n release – exiting."
+        echo "update=true" >> "$GITHUB_OUTPUT"
 
     # ───── patch files ─────
     - name: update files
-      if: steps.latest.outputs.ver != steps.current.outputs.ver
+      if: steps.latest.outputs.update == 'true'
       shell: bash
       run: |
         new="${{ steps.latest.outputs.ver }}"
@@ -67,7 +89,8 @@ jobs:
 
     # ───── create PR ─────
     - name: pull-request
-      if: steps.latest.outputs.ver != steps.current.outputs.ver
+      id: pull-request
+      if: steps.latest.outputs.update == 'true'
       uses: peter-evans/create-pull-request@v7
       with:
         branch: chore/bump-n8n-${{ steps.latest.outputs.ver }}
@@ -80,11 +103,36 @@ jobs:
         labels: |
           automated
 
+    # Close superseded update PRs only after the current PR exists.
+    - name: close previous n8n update pull requests
+      if: steps.pull-request.outputs.pull-request-number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CURRENT_PR: ${{ steps.pull-request.outputs.pull-request-number }}
+        BASE_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        set -euo pipefail
+        gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" |
+          jq -r --arg repo "$GITHUB_REPOSITORY" --arg base "$BASE_BRANCH" --argjson current "$CURRENT_PR" '
+            .[] | select(
+              .number != $current and
+              .base.ref == $base and
+              .head.repo.full_name == $repo and
+              (.head.ref | startswith("chore/bump-n8n-"))
+            ) | .number
+          ' > "$RUNNER_TEMP/previous-n8n-prs"
+        while IFS= read -r number; do
+          gh pr close "$number" --repo "$GITHUB_REPOSITORY" \
+            --comment "Superseded by #${CURRENT_PR}."
+        done < "$RUNNER_TEMP/previous-n8n-prs"
+
     # ───── enable auto-merge ─────
     - name: enable auto-merge
-      if: steps.latest.outputs.ver != steps.current.outputs.ver
+      if: steps.pull-request.outputs.pull-request-number != ''
       uses: pascalgn/automerge-action@v0.16.4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        pr: ${{ steps.pull-request.outputs.pull-request-number }}
+        PULL_REQUEST: ${{ steps.pull-request.outputs.pull-request-number }}
+        MERGE_LABELS: automated
+        UPDATE_LABELS: automated

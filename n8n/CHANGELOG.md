@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Pin the official n8n Docker image to the add-on build version instead of the floating stable tag
+- Install Bash and jq with a temporary static APK tool while retaining the bundled npm
+- Check for newer stable n8n releases and close superseded update pull requests
+
+### Fixed
+- Correct the automated merge configuration for n8n update pull requests
 ## [ 2.47.4 ] - 2026-11-11
 
  Bump n8n to 2.47.4

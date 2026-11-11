@@ -20,6 +20,22 @@ This repository contains the following add-ons
 
 _Example add-on to use as a blueprint for new add-ons._
 
+### n8n updates
+
+The `daily-n8n-bump` workflow checks GitHub's latest n8n release daily at
+05:40 UTC and can also be run manually. It creates or updates a version pull
+request only for a newer non-draft, non-prerelease release with an `n8n@X.Y.Z`
+tag. Equal or older versions and beta/RC tags do not cause updates.
+The add-on's Dockerfile uses the resulting `config.yaml` version through
+the `BUILD_VERSION` argument supplied by Supervisor, rather than a floating tag.
+
+After the current pull request exists, the workflow closes other open pull
+requests from this repository's `chore/bump-n8n-*` branches targeting the default
+branch. Their branches are retained. The automerge action targets the current
+pull request with the `automated` label and respects required branch checks.
+This workflow updates the add-on source; it does not publish a container image
+or create a GitHub Release.
+
 <!--
 
 Notes to developers after forking or using the github template feature:
