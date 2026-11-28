@@ -91,7 +91,7 @@ jobs:
     - name: pull-request
       id: pull-request
       if: steps.latest.outputs.update == 'true'
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@v8
       with:
         branch: chore/bump-n8n-${{ steps.latest.outputs.ver }}
         title:  "Bump n8n to ${{ steps.latest.outputs.ver }}"
